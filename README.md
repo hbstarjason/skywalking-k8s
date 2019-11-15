@@ -1,2 +1,2 @@
 # skywalking-k8s
-'docker build -t hbstarjason/sw-base:6.1.0 .'
+docker build -t hbstarjason/sw-base:6.1.0 .
