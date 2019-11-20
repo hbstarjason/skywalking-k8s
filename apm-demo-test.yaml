@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apm-demo-test
+  labels:
+    app: apm-demo-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apm-demo-test
+  template:
+    metadata:
+      name: apm-demo-test
+      labels:
+        app: apm-demo-test
+    spec:
+      initContainers:
+        - name: sidecar
+          image: hbstarjason/sw-sidecar:6.1.0 # 容器镜像，包含静态资源文件
+          imagePullPolicy: IfNotPresent
+          command: ["cp", "-r", "/usr/skywalking/agent/", "/sidecar"]
+          volumeMounts:
+            - name: sidecar
+              mountPath: /sidecar
+      containers:
+        - name: apm-demo-test
+          image: hbstarjason/k8s-example:51-118184d5970
+          imagePullPolicy: IfNotPresent
+          #command: ["java", "$(SW_AGENT_JAR)", "-Djava.security.egd=file:/dev/./urandom","-jar", "/opt/app.jar"]
+          args: ["$(SW_AGENT_JAR)"]
+          env:
+            - name: SW_AGENT_JAR
+              value: -javaagent:/sidecar/agent/skywalking-agent.jar
+            - name: SW_AGENT_NAME
+              value: apm-demo-test
+            - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+              value: oap.skywalking.svc.cluster.local:11800
+            #- name: EUREKA_HOSTNAME
+            #  value: apm-eureka
+            #- name: EUREKA_PORT
+            #  value: '8761'
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: sidecar
+              mountPath: /sidecar
+      volumes:
+        - name: sidecar  #共享agent文件夹
+          emptyDir: {}
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: apm-demo-test
+  #namespace: skywalking
+  labels:
+    service: apm-demo-test
+spec:
+  type: LoadBalancer
+  selector:
+    app: apm-demo-test
+  ports:
+    - port: 8080
+      name: apm-demo-test
+      targetPort: 8080
+      #nodePort: 30088
+      
