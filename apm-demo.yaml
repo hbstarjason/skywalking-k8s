@@ -69,7 +69,7 @@ spec:
               value: "-javaagent:/sidecar/agent/skywalking-agent.jar"
             - name: EUREKA_URL
               value: "http://sw-performance-test-eureka-server:8761/eureka"
-            - name: AGENT_NAME
+            - name: SW_AGENT_NAME
               value: "service-a"
             - name: DMP_ENV_CODE
               value: "dx-test"
@@ -112,8 +112,6 @@ spec:
           volumeMounts:
             - name: sidecar
               mountPath: /sidecar
-      imagePullSecrets:
-        - name: registry-pull
       containers:
         - image: wutang/service-b:2.0
           name: sw-performance-test-service-b
@@ -131,7 +129,7 @@ spec:
               value: "-javaagent:/sidecar/agent/skywalking-agent.jar"
             - name: EUREKA_URL
               value: "http://sw-performance-test-eureka-server:8761/eureka"
-            - name: AGENT_NAME
+            - name: SW_AGENT_NAME
               value: "service-b"
             - name: DMP_ENV_CODE
               value: "dx-test"
@@ -174,8 +172,6 @@ spec:
           volumeMounts:
             - name: sidecar
               mountPath: /sidecar
-      imagePullSecrets:
-        - name: registry-pull
       containers:
         - image: wutang/service-c:2.0
           name: sw-performance-test-service-c
@@ -193,7 +189,7 @@ spec:
               value: "-javaagent:/sidecar/agent/skywalking-agent.jar"
             - name: EUREKA_URL
               value: "http://sw-performance-test-eureka-server:8761/eureka"
-            - name: AGENT_NAME
+            - name: SW_AGENT_NAME
               value: "service-c"
             - name: DMP_ENV_CODE
               value: "dx-test"
