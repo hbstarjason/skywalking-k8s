@@ -27,8 +27,8 @@ spec:
         - name: apm-demo-test
           image: hbstarjason/k8s-example:51-118184d5970
           imagePullPolicy: IfNotPresent
-          #command: ["java", "$(SW_AGENT_JAR)", "-Djava.security.egd=file:/dev/./urandom","-jar", "/opt/app.jar"]
-          args: ["$(SW_AGENT_JAR)"]
+          command: ["java", "$(SW_AGENT_JAR)", "-Djava.security.egd=file:/dev/./urandom","-jar", "/opt/app.jar"]
+          #args: ["$(SW_AGENT_JAR)"]
           env:
             - name: SW_AGENT_JAR
               value: -javaagent:/sidecar/agent/skywalking-agent.jar
