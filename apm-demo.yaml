@@ -1,0 +1,261 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: apm-demo
+  name: sw-performance-test-eureka-server
+  labels:
+    app: sw-performance-test-eureka-server
+spec:
+  selector:
+    matchLabels:
+      app: sw-performance-test-eureka-server
+  template:
+    metadata:
+      labels:
+        app: sw-performance-test-eureka-server
+    spec:
+      containers:
+        - image: wutang/eureka-server:2.0
+          name: sw-performance-test-eureka-server
+          resources:
+            requests:
+              memory: "1024Mi"
+              cpu: "500m"
+            limits:
+              memory: "1024Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 8761
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: apm-demo
+  name: sw-performance-test-service-a
+  labels:
+    app: sw-performance-test-service-a
+spec:
+  selector:
+    matchLabels:
+      app: sw-performance-test-service-a
+  template:
+    metadata:
+      labels:
+        app: sw-performance-test-service-a
+    spec:
+      initContainers:
+        - name: sidecar
+          image: hbstarjason/sw-sidecar:6.1.0 # 容器镜像，包含静态资源文件
+          imagePullPolicy: IfNotPresent
+          command: ["cp", "-r", "/usr/skywalking/agent/", "/sidecar"]
+          volumeMounts:
+            - name: sidecar
+              mountPath: /sidecar
+      containers:
+        - image: wutang/service-a:2.0
+          name: sw-performance-test-service-a
+          resources:
+            requests:
+              memory: "2048Mi"
+              cpu: "1000m"
+            limits:
+              memory: "2048Mi"
+              cpu: "1000m"
+          ports:
+            - containerPort: 8762
+          env:
+            - name: JAVA_OPTS
+              value: "-javaagent:/sidecar/agent/skywalking-agent.jar"
+            - name: EUREKA_URL
+              value: "http://sw-performance-test-eureka-server:8761/eureka"
+            - name: AGENT_NAME
+              value: "service-a"
+            - name: DMP_ENV_CODE
+              value: "dx-test"
+            - name: DX_APPLICATION_NAME
+              value: "my-app"
+            - name: DX_APPLICATION_ID
+              value: "ggege-fgw4t2-g224t4-g24oj"
+            - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+              value: oap.skywalking.svc.cluster.local:11800
+          volumeMounts:
+            - name: sidecar
+              mountPath: /sidecar
+      volumes:
+        - name: sidecar  #共享agent文件夹
+          emptyDir: {}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: apm-demo
+  name: sw-performance-test-service-b
+  labels:
+    app: sw-performance-test-service-b
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sw-performance-test-service-b
+  template:
+    metadata:
+      labels:
+        app: sw-performance-test-service-b
+    spec:
+      initContainers:
+        - name: sidecar
+          image: hbstarjason/sw-sidecar:6.1.0  # 容器镜像，包含静态资源文件
+          imagePullPolicy: IfNotPresent
+          command: ["cp", "-r", "/usr/skywalking/agent/", "/sidecar"]
+          volumeMounts:
+            - name: sidecar
+              mountPath: /sidecar
+      imagePullSecrets:
+        - name: registry-pull
+      containers:
+        - image: wutang/service-b:2.0
+          name: sw-performance-test-service-b
+          resources:
+            requests:
+              memory: "2048Mi"
+              cpu: "1000m"
+            limits:
+              memory: "2048Mi"
+              cpu: "1000m"
+          ports:
+            - containerPort: 8763
+          env:
+            - name: JAVA_OPTS
+              value: "-javaagent:/sidecar/agent/skywalking-agent.jar"
+            - name: EUREKA_URL
+              value: "http://sw-performance-test-eureka-server:8761/eureka"
+            - name: AGENT_NAME
+              value: "service-b"
+            - name: DMP_ENV_CODE
+              value: "dx-test"
+            - name: DX_APPLICATION_NAME
+              value: "my-app"
+            - name: DX_APPLICATION_ID
+              value: "ggege-fgw4t2-g224t4-g24oj"
+            - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+              value: oap.skywalking.svc.cluster.local:11800
+          volumeMounts:
+            - name: sidecar
+              mountPath: /sidecar
+      volumes:
+        - name: sidecar  #共享agent文件夹
+          emptyDir: {}
+      restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: apm-demo
+  name: sw-performance-test-service-c
+  labels:
+    app: sw-performance-test-service-c
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sw-performance-test-service-c
+  template:
+    metadata:
+      labels:
+        app: sw-performance-test-service-c
+    spec:
+      initContainers:
+        - name: sidecar
+          image: hbstarjason/sw-sidecar:6.1.0  # 容器镜像，包含静态资源文件
+          imagePullPolicy: IfNotPresent
+          command: ["cp", "-r", "/usr/skywalking/agent/", "/sidecar"]
+          volumeMounts:
+            - name: sidecar
+              mountPath: /sidecar
+      imagePullSecrets:
+        - name: registry-pull
+      containers:
+        - image: wutang/service-c:2.0
+          name: sw-performance-test-service-c
+          resources:
+            requests:
+              memory: "2048Mi"
+              cpu: "1000m"
+            limits:
+              memory: "2048Mi"
+              cpu: "1000m"
+          ports:
+            - containerPort: 8764
+          env:
+            - name: JAVA_OPTS
+              value: "-javaagent:/sidecar/agent/skywalking-agent.jar"
+            - name: EUREKA_URL
+              value: "http://sw-performance-test-eureka-server:8761/eureka"
+            - name: AGENT_NAME
+              value: "service-c"
+            - name: DMP_ENV_CODE
+              value: "dx-test"
+            - name: DX_APPLICATION_NAME
+              value: "my-app"
+            - name: DX_APPLICATION_ID
+              value: "ggege-fgw4t2-g224t4-g24oj"
+            - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+              value: oap.skywalking.svc.cluster.local:11800
+          volumeMounts:
+            - name: sidecar
+              mountPath: /sidecar
+      volumes:
+        - name: sidecar  #共享agent文件夹
+          emptyDir: {}
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sw-performance-test-eureka-server
+spec:
+  #type: NodePort
+  type: LoadBalancer
+  ports:
+    - port: 8761
+  selector:
+    app: sw-performance-test-eureka-server
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sw-performance-test-service-a
+spec:
+  #type: NodePort
+  type: LoadBalancer
+  ports:
+    - port: 8762
+  selector:
+    app: sw-performance-test-service-a
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sw-performance-test-service-b
+spec:
+  #type: NodePort
+  type: LoadBalancer
+  ports:
+    - port: 8763
+  selector:
+    app: sw-performance-test-service-b
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sw-performance-test-service-c
+spec:
+  #type: NodePort
+  type: LoadBalancer
+  ports:
+    - port: 8764
+  selector:
+    app: sw-performance-test-service-c
